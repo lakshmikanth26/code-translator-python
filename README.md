@@ -1,5 +1,5 @@
-# code-translator-python
-code-translator-python
+# code-generator-python
+code-generator-python
 
 
 get gemini api key from
