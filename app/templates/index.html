@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gemini Flask App</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script>
+        function useSuggestion(suggestion) {
+            document.getElementById("prompt").value = suggestion;
+        }
+
+        function showLoader() {
+            document.getElementById("loader").style.display = "flex";
+        }
+
+        // Start new chat (clear prompt and response)
+        function startNewChat() {
+            document.getElementById("prompt").value = ''; 
+            document.getElementById("response-container").innerHTML = ''; 
+        }
+
+        // Load selected chat from history
+        function loadChat(chatName) {
+            fetch(`/load_chat/${chatName}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("response-container").innerHTML = `
+                        <div class="response">
+                            <h3>Response:</h3>
+                            <p>${data.response_text}</p>
+                            <h3>Generated Code:</h3>
+                            <div class="code-block">
+                                <pre><code>${data.response_code}</code></pre>
+                            </div>
+                        </div>
+                    `;
+                })
+                .catch(error => console.error("Error loading chat:", error));
+        }
+
+        // Save the chat without submitting the form
+        function saveChat(event) {
+            event.preventDefault(); // Prevent form submission
+
+            const chatName = document.getElementById("chat_name").value;
+            if (!chatName) {
+                alert("Please enter a chat name!");
+                return;
+            }
+
+            // Get response content
+            const responseText = document.getElementById("response-container").innerText;
+            const code = document.querySelector(".code-block pre code") ? document.querySelector(".code-block pre code").innerText : '';
+
+            const formData = new FormData();
+            formData.append("chat_name", chatName);
+            formData.append("save", true);
+            formData.append("prompt", chatName);
+            formData.append("response_text", responseText);
+            formData.append("response_code", code);
+            console.log(chatName,document.getElementById("prompt").value,responseText,code)
+            fetch("/", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return Promise.reject("Failed to save chat.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert("Chat saved successfully!");
+            })
+            .catch(error => {
+                console.log("Error saving chat:" + error);
+                alert("Error saving chat.");
+            });
+        }
+
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar for Chat History -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Chat History</h2>
+                <button id="new-chat-btn" onclick="startNewChat()">+ New Chat</button>
+            </div>
+            <ul class="chat-history">
+                {% for chat in history %}
+                    <li onclick="loadChat('{{ chat.name }}')">{{ chat.name }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="chat-container">
+            <div class="hero">
+                <div class="hero-content">
+                    <h1>Code Generator App</h1>
+                    <p>Generate code snippets effortlessly with the power of AI!</p>
+                </div>
+            </div>
+
+            <form method="POST" id="chatForm" onsubmit="showLoader()">
+                <label for="prompt">Enter a Prompt:</label>
+                <textarea
+                    id="prompt"
+                    name="prompt"
+                    rows="4"
+                    placeholder="Type your prompt here..."
+                ></textarea>
+
+                <div class="suggestions">
+                    <h3>Try these suggestions:</h3>
+                    <div class="chips">
+                        <span class="chip" onclick="useSuggestion('Sum of random 3 numbers using Python')">Sum of 3 random numbers (Python)</span>
+                        <span class="chip" onclick="useSuggestion('Generate a Fibonacci sequence in JavaScript')">Fibonacci Sequence (JS)</span>
+                        <span class="chip" onclick="useSuggestion('Write a SQL query to find the top 3 salaries from an Employee table')">Top 3 Salaries (SQL)</span>
+                        <span class="chip" onclick="useSuggestion('Build a React component that fetches and displays data from an API')">React Component (API)</span>
+                        <span class="chip" onclick="useSuggestion('Create a function to reverse a string in Python')">Reverse a String (Python)</span>
+                    </div>
+                </div>
+
+                <button type="submit">Generate</button>
+            </form>
+
+            <!-- Loader Animation -->
+            <div id="loader">
+                <div class="spinner"></div>
+            </div>
+
+            <!-- Response Container -->
+            <div id="response-container">
+                {% if response %}
+                <div class="response">
+                    {% if response.text %}
+                    <div class="response-header">
+                        <h3>Response:</h3>
+                
+                        <div class="save-chat">
+                            <input type="text" id="chat_name" name="chat_name" placeholder="Chat name" required />
+                            <button type="button" onclick="saveChat(event)">Save Chat</button>
+                        </div>
+                    </div>
+                    <p>{{ response.text }}</p>
+                    {% endif %} 
+                    {% if response.code %}
+                    <h3>Generated Code:</h3>
+                    <div class="code-block">
+                        <pre id="code-block"><code>{{ response.code }}</code></pre>
+                        <button class="copy-btn" onclick="copyToClipboard()">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard() {
+            const codeBlock = document.getElementById("code-block").innerText;
+            navigator.clipboard
+            .writeText(codeBlock)
+            .then(() => {
+                alert("Code copied to clipboard!");
+            })
+            .catch((err) => {
+                alert("Failed to copy code: " + err);
+            });
+        }
+    </script>
+</body>
+</html>

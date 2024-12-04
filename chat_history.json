@@ -1,0 +1,14 @@
+[
+  {
+    "name": "ssql",
+    "prompt": "ssql",
+    "response_text": "I need more information to understand your request.  \"ssql\" isn't a complete instruction.  Are you referring to a specific SQL query?  Do you want me to help you write an SQL query, explain an existing one, or something else? Please provide more context or details about what you want to do with SQL.\n",
+    "response_code": null
+  },
+  {
+    "name": "1244",
+    "prompt": "1244",
+    "response_text": "The number 1244 is an integer.  Is there anything specific you would like to know about it?  For example, are you interested in its:\n\n* Prime factorization?\n* Divisors?\n* Whether it's even or odd?\n* Its representation in other bases?\n\nPlease clarify your request.\n",
+    "response_code": null
+  }
+]
